@@ -3,8 +3,17 @@ name: Ansible Deployment (Ubuntu Runner)
 on:
   workflow_dispatch:
     inputs:
-      tf_action:
-        description: "Terraform action to run (apply/destroy)"
+      nginx_ip1:
+        description: "Public IP of Nginx EC2 #1"
+        required: true
+      nginx_ip2:
+        description: "Public IP of Nginx EC2 #2"
+        required: true
+      java_ip1:
+        description: "Private IP of Java EC2 #1"
+        required: true
+      java_ip2:
+        description: "Private IP of Java EC2 #2"
         required: true
 
 jobs:
@@ -26,33 +35,23 @@ jobs:
         pip install ansible
         sudo apt-get update && sudo apt-get install -y jq
 
-    - name: Terraform Init & Apply
-      working-directory: terraform
-      run: |
-        terraform init
-        terraform apply -auto-approve
-
-    - name: Capture Terraform Outputs
-      working-directory: terraform
-      run: |
-        echo "NGINX_IPS=$(terraform output -json nginx_public_ips)" >> $GITHUB_ENV
-        echo "JAVA_IPS=$(terraform output -json app_private_ips)" >> $GITHUB_ENV
-
     - name: Generate Ansible Inventory
       run: |
         mkdir -p ansible
         cd ansible
         echo "[nginx]" > inventory.ini
-        echo "$NGINX_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+        echo "${{ github.event.inputs.nginx_ip1 }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+        echo "${{ github.event.inputs.nginx_ip2 }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
 
         echo "" >> inventory.ini
         echo "[java]" >> inventory.ini
-        echo "$JAVA_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+        echo "${{ github.event.inputs.java_ip1 }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+        echo "${{ github.event.inputs.java_ip2 }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
 
     - name: Setup SSH Key
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.KEY_NAME}}" > ~/.ssh/ec2.pem
+        echo "${{ secrets.KEY_NAME }}" > ~/.ssh/ec2.pem
         chmod 400 ~/.ssh/ec2.pem
 
     - name: Test SSH Connectivity
@@ -65,43 +64,3 @@ jobs:
       run: |
         cd ansible
         ansible-playbook -i inventory.ini playbook.yml
-
-jobs:
-  ansible:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install Ansible
-        run: |
-          sudo apt update
-          sudo apt install -y ansible
-
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
-          chmod 400 ~/.ssh/ec2.pem
-
-      - name: Create inventory
-        run: |
-          cat <<EOF > inventory.ini
-          [java]
-          ${{ github.event.inputs.java_ip }}
-
-          [nginx]
-          ${{ github.event.inputs.nginx_ip }}
-
-          [all:vars]
-          ansible_user=ec2-user
-          ansible_ssh_private_key_file=~/.ssh/ec2.pem
-          ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-          EOF
-
-      - name: Test connectivity
-        run: ansible all -i inventory.ini -m ping
-
-      - name: Run playbook
-        run: ansible-playbook -i inventory.ini playbook.yml
