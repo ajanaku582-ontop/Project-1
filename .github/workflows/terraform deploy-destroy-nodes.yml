@@ -98,11 +98,12 @@ jobs:
         ANSIBLE_HOST_KEY_CHECKING: "False"
       run: |
         echo "[nginx]" > inventory.ini
-        echo "$NGINX_IP" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+        echo "$NGINX_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
 
         echo "" >> inventory.ini
         echo "[java]" >> inventory.ini
-        echo "$JAVA_IP" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+        echo "$JAVA_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+
 
     - name: Test SSH Connectivity
       if: github.event.inputs.tf_action == 'apply'
