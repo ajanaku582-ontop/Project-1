@@ -118,6 +118,12 @@ jobs:
         ansible nginx -i inventory.ini -m ping || true
         ansible java  -i inventory.ini -m ping || true
 
+    - name: Debug repo structure
+      run: |
+         pwd
+         ls -la
+
+
     - name: Ansible Configure
       if: github.event.inputs.tf_action == 'apply'
       working-directory: playbooks
