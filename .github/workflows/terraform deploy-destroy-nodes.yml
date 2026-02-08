@@ -126,7 +126,7 @@ jobs:
 
     - name: Ansible Configure
       if: github.event.inputs.tf_action == 'apply'
-      working-directory: playbooks
+      working-directory: ansible
       env:
         ANSIBLE_HOST_KEY_CHECKING: "False"
       run: |
