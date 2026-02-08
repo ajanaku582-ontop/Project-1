@@ -1,0 +1,52 @@
+---
+name: Ansible Deployment (Ubuntu Runner)
+
+on:
+  workflow_dispatch:
+    inputs:
+      java_ip:
+        description: "Public IP of Java EC2"
+        required: true
+      nginx_ip:
+        description: "Public IP of Nginx EC2"
+        required: true
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
+          chmod 400 ~/.ssh/ec2.pem
+
+      - name: Create inventory
+        run: |
+          cat <<EOF > inventory.ini
+          [java]
+          ${{ github.event.inputs.java_ip }}
+
+          [nginx]
+          ${{ github.event.inputs.nginx_ip }}
+
+          [all:vars]
+          ansible_user=ec2-user
+          ansible_ssh_private_key_file=~/.ssh/ec2.pem
+          ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+          EOF
+
+      - name: Test connectivity
+        run: ansible all -i inventory.ini -m ping
+
+      - name: Run playbook
+        run: ansible-playbook -i inventory.ini playbook.yml
