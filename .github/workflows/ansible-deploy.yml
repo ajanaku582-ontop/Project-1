@@ -48,6 +48,19 @@ jobs:
         echo "${{ github.event.inputs.java_ip1 }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
         echo "${{ github.event.inputs.java_ip2 }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
 
+    - name: Generate Ansible Inventory
+      working-directory: ansible
+      env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+      run: |
+          echo "[java]" > inventory.ini
+          echo "$JAVA_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> ansible/inventory.ini
+
+          echo "" >> inventory.ini
+          echo "[nginx]" >> inventory.ini
+          echo "$NGINX_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> ansible/inventory.ini
+
+
     - name: Setup SSH Key
       run: |
         mkdir -p ~/.ssh
