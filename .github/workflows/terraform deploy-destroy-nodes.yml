@@ -91,46 +91,46 @@ jobs:
              echo "Nginx Node IP: ${{ env.NGINX_IP }}"
 
     
-    - name: Clone Git repository
-      if: github.event.inputs.tf_action == 'apply'
-      run: |
-        echo "Git repository cloning will be handled by Ansible playbook"
+    # - name: Clone Git repository
+    #   if: github.event.inputs.tf_action == 'apply'
+    #   run: |
+    #     echo "Git repository cloning will be handled by Ansible playbook"
 
 
-    - name: Setup SSH Key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.KEY_NAME }}" > ~/.ssh/ec2.pem
-        chmod 400 ~/.ssh/ec2.pem
+    # - name: Setup SSH Key
+    #   run: |
+    #     mkdir -p ~/.ssh
+    #     echo "${{ secrets.KEY_NAME }}" > ~/.ssh/ec2.pem
+    #     chmod 400 ~/.ssh/ec2.pem
 
-    - name: Generate Ansible Inventory
-      working-directory: ansible
-      env:
-        ANSIBLE_HOST_KEY_CHECKING: "False"
-      run: |
-        cd ansible   # or cd correct-folder-name
-        echo "[nginx]" > inventory.ini
-        echo "$NGINX_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+    # - name: Generate Ansible Inventory
+    #   working-directory: ansible
+    #   env:
+    #     ANSIBLE_HOST_KEY_CHECKING: "False"
+    #   run: |
+    #     cd ansible   # or cd correct-folder-name
+    #     echo "[nginx]" > inventory.ini
+    #     echo "$NGINX_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
 
-        echo "" >> inventory.ini
-        echo "[app]" >> inventory.ini
-        echo "$APP_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+    #     echo "" >> inventory.ini
+    #     echo "[app]" >> inventory.ini
+    #     echo "$APP_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
 
-    - name: Test SSH Connectivity
-      if: github.event.inputs.tf_action == 'apply'
-      working-directory: ansible
-      env:
-        ANSIBLE_HOST_KEY_CHECKING: "False"
-      run: |
-        ansible nginx -i inventory.ini -m ping || true
-        ansible app  -i inventory.ini -m ping || true
+    # - name: Test SSH Connectivity
+    #   if: github.event.inputs.tf_action == 'apply'
+    #   working-directory: ansible
+    #   env:
+    #     ANSIBLE_HOST_KEY_CHECKING: "False"
+    #   run: |
+    #     ansible nginx -i inventory.ini -m ping || true
+    #     ansible app  -i inventory.ini -m ping || true
 
-    - name: Ansible Configure
-      if: github.event.inputs.tf_action == 'apply'
-      working-directory: ansible
-      env:
-        ANSIBLE_HOST_KEY_CHECKING: "False"
-      run: |
-        ansible-playbook -i ansible/inventory.ini playbooks/site.yml -vvv 
+    # - name: Ansible Configure
+    #   if: github.event.inputs.tf_action == 'apply'
+    #   working-directory: ansible
+    #   env:
+    #     ANSIBLE_HOST_KEY_CHECKING: "False"
+    #   run: |
+    #     ansible-playbook -i ansible/inventory.ini playbooks/site.yml -vvv 
 
 
