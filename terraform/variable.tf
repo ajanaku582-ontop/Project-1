@@ -21,7 +21,7 @@ variable "instance_type" {
 }
 
 variable "db_username" {
-  type = string
+  default = "appuser"
 }
 
 variable "db_password" {
