@@ -152,7 +152,7 @@ resource "aws_route_table_association" "private" {
 # NGINX Instances (Public)
 ####################
 resource "aws_instance" "nginx" {
-  count                       = 2
+  count                       = 1
   ami                         = var.ami
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.public[count.index].id
@@ -192,7 +192,7 @@ EOF
 # App Instances (Private)
 ####################
 resource "aws_instance" "app" {
-  count                  = 2
+  count                  = 1
   ami                    = var.ami
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.grace_private[count.index].id
