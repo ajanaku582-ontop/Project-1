@@ -42,8 +42,8 @@ jobs:
       working-directory: terraform
       run: |
         cat <<EOF > terraform.tfvars
-        ami   = "${{ secrets.TF_VAR_ami_id }}"
-        key_name = "${{ secrets.TF_VAR_key_name }}"
+        ami   = "${{ secrets.TF_VAR_AMI_ID }}"
+        key_name = "${{ secrets.TF_VAR_KEY_NAME }}"
         EOF
 
     - name: Terraform Init
@@ -83,11 +83,13 @@ jobs:
     - name: Setup SSH Key
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
+        echo "${{ secrets.KEY_NAME }}" > ~/.ssh/ec2.pem
         chmod 400 ~/.ssh/ec2.pem
 
     - name: Ansible Configure
       if: github.event.inputs.tf_action == 'apply'
       run: |
         ansible-playbook -i "${{ env.JAVA_IP }}," -u ec2-user --private-key ~/.ssh/ec2.pem ansible/playbook.yml
+        ansible-playbook -i "${{ env.NGINX_IP }}," -u ec2-user --private-key ~/.ssh/ec2.pem ansible/playbook.yml
+        
 
