@@ -96,18 +96,18 @@ jobs:
         echo "${{ secrets.KEY_NAME }}" > ~/.ssh/ec2.pem
         chmod 400 ~/.ssh/ec2.pem
 
-    - name: Generate Ansible Inventory
-      working-directory: ansible
-      env:
-        ANSIBLE_HOST_KEY_CHECKING: "False"
-      run: |
-        cd ansible   # or cd correct-folder-name
-        echo "[nginx]" > inventory.ini
-        echo "$NGINX_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+    # - name: Generate Ansible Inventory
+    #   working-directory: ansible
+    #   env:
+    #     ANSIBLE_HOST_KEY_CHECKING: "False"
+    #   run: |
+    #     cd ansible   # or cd correct-folder-name
+    #     echo "[nginx]" > inventory.ini
+    #     echo "$NGINX_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
 
-        echo "" >> inventory.ini
-        echo "[java]" >> inventory.ini
-        echo "$JAVA_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
+    #     echo "" >> inventory.ini
+    #     echo "[java]" >> inventory.ini
+    #     echo "$JAVA_IPS" | jq -r '.[] | . + " ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem"' >> inventory.ini
 
     - name: Test SSH Connectivity
       if: github.event.inputs.tf_action == 'apply'
