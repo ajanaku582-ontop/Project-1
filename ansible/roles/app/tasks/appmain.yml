@@ -1,0 +1,37 @@
+- name: Install dependencies
+  yum:
+    name:
+      - python3
+      - git
+    state: present
+
+- name: Create app directory
+  file:
+    path: /opt/market-app
+    state: directory
+    owner: ec2-user
+
+- name: Copy app artefacts
+  copy:
+    src: "{{ item }}"
+    dest: /opt/market-app/
+    owner: ec2-user
+  loop:
+    - app.py
+    - requirements.txt
+
+- name: Install python deps
+  pip:
+    requirements: /opt/market-app/requirements.txt
+    executable: pip3
+
+- name: Install systemd service
+  copy:
+    src: app.service
+    dest: /etc/systemd/system/app.service
+
+- name: Start app service
+  systemd:
+    name: app
+    enabled: yes
+    state: started
